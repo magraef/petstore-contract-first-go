@@ -1,0 +1,5 @@
+package: http
+generate:
+  chi-server: true
+  strict-server: true
+output: router_gen.go
