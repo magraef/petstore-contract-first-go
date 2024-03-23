@@ -6,6 +6,8 @@ package sqlcgen
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type Querier interface {
@@ -16,7 +18,7 @@ type Querier interface {
 	CreatePet(ctx context.Context, db DBTX, arg CreatePetParams) (CreatePetRow, error)
 	// Delete a pet by ID
 	// :id - ID of the pet to delete
-	DeletePet(ctx context.Context, db DBTX, id int32) error
+	DeletePet(ctx context.Context, db DBTX, id int32) (pgconn.CommandTag, error)
 	// Find all pets optionally filtered by category.name
 	// :categorieNames - Optional filter by category.name
 	// :limit - Limit the number of results
@@ -29,7 +31,7 @@ type Querier interface {
 	// :id - ID of the pet to update
 	// :name - New name of the pet
 	// :category_name - New category ID of the pet
-	UpdatePet(ctx context.Context, db DBTX, arg UpdatePetParams) error
+	UpdatePet(ctx context.Context, db DBTX, arg UpdatePetParams) (pgconn.CommandTag, error)
 }
 
 var _ Querier = (*Queries)(nil)

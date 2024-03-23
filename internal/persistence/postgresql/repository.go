@@ -3,10 +3,9 @@ package postgresql
 
 import (
 	"context"
-
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/magraef/petstore-contract-first-go/internal"
-	"github.com/magraef/petstore-contract-first-go/internal/postgresql/sqlcgen"
+	"github.com/magraef/petstore-contract-first-go/internal/persistence/postgresql/sqlcgen"
 	"github.com/rs/zerolog/log"
 )
 
@@ -26,7 +25,6 @@ func NewPgxPool(postgreUrl string, db string) *pgxpool.Pool {
 	pgxConfig.ConnConfig.Database = db
 
 	pool, err := pgxpool.NewWithConfig(context.Background(), pgxConfig)
-
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to create connection db")
 	}
@@ -39,7 +37,16 @@ func NewPgxPool(postgreUrl string, db string) *pgxpool.Pool {
 }
 
 func NewRepository(pool *pgxpool.Pool) *Repository {
-	return &Repository{db: pool, querier: sqlcgen.New()}
+	repo := &Repository{db: pool, querier: sqlcgen.New()}
+	err := repo.migrateSchema()
+	if err != nil {
+		log.Warn().Err(err).Msg("failed to run schema migration")
+	}
+	return repo
+}
+
+func (r *Repository) migrateSchema() error {
+	return migrateSchema(r.db)
 }
 
 func (r *Repository) Close() {

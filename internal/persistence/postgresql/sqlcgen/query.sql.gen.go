@@ -7,6 +7,8 @@ package sqlcgen
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 const createPet = `-- name: CreatePet :one
@@ -51,15 +53,14 @@ func (q *Queries) CreatePet(ctx context.Context, db DBTX, arg CreatePetParams) (
 	return i, err
 }
 
-const deletePet = `-- name: DeletePet :exec
+const deletePet = `-- name: DeletePet :execresult
 DELETE FROM pets WHERE id = $1
 `
 
 // Delete a pet by ID
 // :id - ID of the pet to delete
-func (q *Queries) DeletePet(ctx context.Context, db DBTX, id int32) error {
-	_, err := db.Exec(ctx, deletePet, id)
-	return err
+func (q *Queries) DeletePet(ctx context.Context, db DBTX, id int32) (pgconn.CommandTag, error) {
+	return db.Exec(ctx, deletePet, id)
 }
 
 const findAllPets = `-- name: FindAllPets :many
@@ -68,7 +69,7 @@ FROM pets p
 JOIN categories c ON p.category_id = c.id
 WHERE
     CASE
-        WHEN $1::varchar[] IS NOT NULL THEN
+        WHEN $1::varchar[] IS NOT NULL AND array_length($1::varchar[], 1) > 0  THEN
             c.name = ANY($1::varchar[])
         ELSE
             TRUE
@@ -148,7 +149,7 @@ func (q *Queries) GetPetById(ctx context.Context, db DBTX, id int32) (GetPetById
 	return i, err
 }
 
-const updatePet = `-- name: UpdatePet :exec
+const updatePet = `-- name: UpdatePet :execresult
 WITH updated_category AS (
     INSERT INTO categories (name)
     VALUES ($3)
@@ -174,7 +175,6 @@ type UpdatePetParams struct {
 // :id - ID of the pet to update
 // :name - New name of the pet
 // :category_name - New category ID of the pet
-func (q *Queries) UpdatePet(ctx context.Context, db DBTX, arg UpdatePetParams) error {
-	_, err := db.Exec(ctx, updatePet, arg.Name, arg.Petid, arg.Categoryname)
-	return err
+func (q *Queries) UpdatePet(ctx context.Context, db DBTX, arg UpdatePetParams) (pgconn.CommandTag, error) {
+	return db.Exec(ctx, updatePet, arg.Name, arg.Petid, arg.Categoryname)
 }

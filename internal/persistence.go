@@ -1,6 +1,8 @@
 package internal
 
-import "context"
+import (
+	"context"
+)
 
 type PetsRepository interface {
 	Repository

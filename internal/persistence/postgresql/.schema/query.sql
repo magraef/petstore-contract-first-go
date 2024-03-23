@@ -8,7 +8,7 @@ FROM pets p
 JOIN categories c ON p.category_id = c.id
 WHERE
     CASE
-        WHEN sqlc.narg('categorieNames')::varchar[] IS NOT NULL THEN
+        WHEN sqlc.narg('categorieNames')::varchar[] IS NOT NULL AND array_length(sqlc.narg('categorieNames')::varchar[], 1) > 0  THEN
             c.name = ANY(sqlc.narg('categorieNames')::varchar[])
         ELSE
             TRUE
@@ -36,7 +36,7 @@ RETURNING pets.id AS pet_id, pets.name AS pet_name,
     pets.category_id AS category_id, (SELECT name FROM inserted_category) as category_name;
 
 
--- name: UpdatePet :exec
+-- name: UpdatePet :execresult
 -- Update an existing pet by ID
 -- :id - ID of the pet to update
 -- :name - New name of the pet
@@ -55,7 +55,7 @@ SET
 WHERE pets.id = @petId
     RETURNING id, name, category_id, (SELECT name FROM updated_category) as category_name;
 
--- name: DeletePet :exec
+-- name: DeletePet :execresult
 -- Delete a pet by ID
 -- :id - ID of the pet to delete
 DELETE FROM pets WHERE id = $1;

@@ -4,8 +4,6 @@
 
 package sqlcgen
 
-import ()
-
 type Category struct {
 	ID   int32
 	Name string
