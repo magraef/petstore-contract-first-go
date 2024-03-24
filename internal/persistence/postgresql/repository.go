@@ -10,6 +10,7 @@ import (
 )
 
 var _ internal.Repository = (*Repository)(nil)
+var _ internal.ReadinessCheck = (*Repository)(nil)
 
 type Repository struct {
 	db      *pgxpool.Pool
@@ -53,6 +54,6 @@ func (r *Repository) Close() {
 	r.db.Close()
 }
 
-func (r *Repository) Ping(ctx context.Context) error {
-	return r.db.Ping(ctx)
+func (r *Repository) Check() error {
+	return r.db.Ping(context.Background())
 }

@@ -16,5 +16,5 @@ func main() {
 
 	controller := http.NewPetstoreController(petsResourceImpl)
 
-	http.NewServer(controller, config.Api.BaseUrl, config.Api.Port)
+	http.NewServer(controller, repository, config.Api.BaseUrl, config.Api.Port)
 }

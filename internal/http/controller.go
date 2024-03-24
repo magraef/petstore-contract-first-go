@@ -38,7 +38,7 @@ func (p PetstoreController) GetPets(ctx context.Context, request GetPetsRequestO
 		return nil, err
 	}
 
-	var result GetPets200JSONResponse
+	result := GetPets200JSONResponse{}
 
 	for _, p := range *pets {
 		result = append(result, Pet{

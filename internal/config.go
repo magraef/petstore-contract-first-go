@@ -16,7 +16,7 @@ type ApiConfig struct {
 }
 
 type PostgresqlConfig struct {
-	Url      string `default:"postgres://postgres:admin@localhost:5455"`
+	Url      string `default:"postgres://postgres:admin@localhost:5432"`
 	Database string `default:"petstore"`
 }
 

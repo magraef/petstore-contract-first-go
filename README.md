@@ -26,3 +26,18 @@ sqlc is a tool for generating type-safe Go code from SQL. It allows you to write
 
 ## Usage
 
+#### Local dev with postgresql docker container
+
+```shell
+# start postgresql local
+docker run -e POSTGRES_PASSWORD=admin -e POSTGRES_DB=petstore -p 5432:5432 -d postgres
+ 
+# start application
+go run cmd/server/main.go
+```
+
+#### Run application with docker compose
+
+```shell
+docker compose up
+```

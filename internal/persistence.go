@@ -1,15 +1,11 @@
 package internal
 
-import (
-	"context"
-)
-
 type PetsRepository interface {
 	Repository
 	PetsResource
+	ReadinessCheck
 }
 
 type Repository interface {
 	Close()
-	Ping(ctx context.Context) error
 }
