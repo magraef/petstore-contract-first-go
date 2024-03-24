@@ -91,7 +91,7 @@ func (p PetstoreController) UpdatePet(ctx context.Context, request UpdatePetRequ
 		return nil, err
 	}
 
-	return UpdatePet200Response{}, nil
+	return UpdatePet202Response{}, nil
 }
 
 func (p PetstoreController) DeletePet(ctx context.Context, request DeletePetRequestObject) (DeletePetResponseObject, error) {
@@ -99,7 +99,7 @@ func (p PetstoreController) DeletePet(ctx context.Context, request DeletePetRequ
 		return nil, err
 	}
 
-	return DeletePet200Response{}, nil
+	return DeletePet204Response{}, nil
 }
 
 func (p PetstoreController) GetPetById(ctx context.Context, request GetPetByIdRequestObject) (GetPetByIdResponseObject, error) {

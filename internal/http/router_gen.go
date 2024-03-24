@@ -24,7 +24,7 @@ type ServerInterface interface {
 	AddPet(w http.ResponseWriter, r *http.Request)
 	// Deletes a pet
 	// (DELETE /pets/{petId})
-	DeletePet(w http.ResponseWriter, r *http.Request, petId int64, params DeletePetParams)
+	DeletePet(w http.ResponseWriter, r *http.Request, petId int64)
 	// Find pet by ID
 	// (GET /pets/{petId})
 	GetPetById(w http.ResponseWriter, r *http.Request, petId int64)
@@ -51,7 +51,7 @@ func (_ Unimplemented) AddPet(w http.ResponseWriter, r *http.Request) {
 
 // Deletes a pet
 // (DELETE /pets/{petId})
-func (_ Unimplemented) DeletePet(w http.ResponseWriter, r *http.Request, petId int64, params DeletePetParams) {
+func (_ Unimplemented) DeletePet(w http.ResponseWriter, r *http.Request, petId int64) {
 	w.WriteHeader(http.StatusNotImplemented)
 }
 
@@ -81,8 +81,6 @@ func (siw *ServerInterfaceWrapper) GetPets(w http.ResponseWriter, r *http.Reques
 	ctx := r.Context()
 
 	var err error
-
-	ctx = context.WithValue(ctx, Petstore_authScopes, []string{"write:pets", "read:pets"})
 
 	// Parameter object where we will unmarshal all parameters from the context
 	var params GetPetsParams
@@ -126,8 +124,6 @@ func (siw *ServerInterfaceWrapper) GetPets(w http.ResponseWriter, r *http.Reques
 func (siw *ServerInterfaceWrapper) AddPet(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
-	ctx = context.WithValue(ctx, Petstore_authScopes, []string{"write:pets", "read:pets"})
-
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.AddPet(w, r)
 	}))
@@ -154,34 +150,8 @@ func (siw *ServerInterfaceWrapper) DeletePet(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	ctx = context.WithValue(ctx, Petstore_authScopes, []string{"write:pets", "read:pets"})
-
-	// Parameter object where we will unmarshal all parameters from the context
-	var params DeletePetParams
-
-	headers := r.Header
-
-	// ------------- Optional header parameter "api_key" -------------
-	if valueList, found := headers[http.CanonicalHeaderKey("api_key")]; found {
-		var ApiKey string
-		n := len(valueList)
-		if n != 1 {
-			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "api_key", Count: n})
-			return
-		}
-
-		err = runtime.BindStyledParameterWithOptions("simple", "api_key", valueList[0], &ApiKey, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: false})
-		if err != nil {
-			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "api_key", Err: err})
-			return
-		}
-
-		params.ApiKey = &ApiKey
-
-	}
-
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.DeletePet(w, r, petId, params)
+		siw.Handler.DeletePet(w, r, petId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -205,8 +175,6 @@ func (siw *ServerInterfaceWrapper) GetPetById(w http.ResponseWriter, r *http.Req
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "petId", Err: err})
 		return
 	}
-
-	ctx = context.WithValue(ctx, Api_keyScopes, []string{})
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetPetById(w, r, petId)
@@ -233,8 +201,6 @@ func (siw *ServerInterfaceWrapper) UpdatePet(w http.ResponseWriter, r *http.Requ
 		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "petId", Err: err})
 		return
 	}
-
-	ctx = context.WithValue(ctx, Petstore_authScopes, []string{"write:pets", "read:pets"})
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdatePet(w, r, petId)
@@ -396,12 +362,13 @@ func (response GetPets200JSONResponse) VisitGetPetsResponse(w http.ResponseWrite
 	return json.NewEncoder(w).Encode(response)
 }
 
-type GetPets400Response struct {
-}
+type GetPets400ApplicationProblemPlusJSONResponse Problem
 
-func (response GetPets400Response) VisitGetPetsResponse(w http.ResponseWriter) error {
+func (response GetPets400ApplicationProblemPlusJSONResponse) VisitGetPetsResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(400)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type AddPetRequestObject struct {
@@ -421,45 +388,65 @@ func (response AddPet201JSONResponse) VisitAddPetResponse(w http.ResponseWriter)
 	return json.NewEncoder(w).Encode(response)
 }
 
-type AddPet405Response struct {
+type AddPet400ApplicationProblemPlusJSONResponse Problem
+
+func (response AddPet400ApplicationProblemPlusJSONResponse) VisitAddPetResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+
+	return json.NewEncoder(w).Encode(response)
 }
 
-func (response AddPet405Response) VisitAddPetResponse(w http.ResponseWriter) error {
-	w.WriteHeader(405)
-	return nil
+type AddPet404ApplicationProblemPlusJSONResponse Problem
+
+func (response AddPet404ApplicationProblemPlusJSONResponse) VisitAddPetResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type AddPet409ApplicationProblemPlusJSONResponse Problem
+
+func (response AddPet409ApplicationProblemPlusJSONResponse) VisitAddPetResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type DeletePetRequestObject struct {
-	PetId  int64 `json:"petId"`
-	Params DeletePetParams
+	PetId int64 `json:"petId"`
 }
 
 type DeletePetResponseObject interface {
 	VisitDeletePetResponse(w http.ResponseWriter) error
 }
 
-type DeletePet200Response struct {
+type DeletePet204Response struct {
 }
 
-func (response DeletePet200Response) VisitDeletePetResponse(w http.ResponseWriter) error {
-	w.WriteHeader(200)
+func (response DeletePet204Response) VisitDeletePetResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
 	return nil
 }
 
-type DeletePet400Response struct {
-}
+type DeletePet400JSONResponse Problem
 
-func (response DeletePet400Response) VisitDeletePetResponse(w http.ResponseWriter) error {
+func (response DeletePet400JSONResponse) VisitDeletePetResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(400)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
 }
 
-type DeletePet404Response struct {
-}
+type DeletePet404ApplicationProblemPlusJSONResponse Problem
 
-func (response DeletePet404Response) VisitDeletePetResponse(w http.ResponseWriter) error {
+func (response DeletePet404ApplicationProblemPlusJSONResponse) VisitDeletePetResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(404)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type GetPetByIdRequestObject struct {
@@ -479,20 +466,22 @@ func (response GetPetById200JSONResponse) VisitGetPetByIdResponse(w http.Respons
 	return json.NewEncoder(w).Encode(response)
 }
 
-type GetPetById400Response struct {
-}
+type GetPetById400ApplicationProblemPlusJSONResponse Problem
 
-func (response GetPetById400Response) VisitGetPetByIdResponse(w http.ResponseWriter) error {
+func (response GetPetById400ApplicationProblemPlusJSONResponse) VisitGetPetByIdResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(400)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
 }
 
-type GetPetById404Response struct {
-}
+type GetPetById404ApplicationProblemPlusJSONResponse Problem
 
-func (response GetPetById404Response) VisitGetPetByIdResponse(w http.ResponseWriter) error {
+func (response GetPetById404ApplicationProblemPlusJSONResponse) VisitGetPetByIdResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(404)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 type UpdatePetRequestObject struct {
@@ -504,20 +493,39 @@ type UpdatePetResponseObject interface {
 	VisitUpdatePetResponse(w http.ResponseWriter) error
 }
 
-type UpdatePet200Response struct {
+type UpdatePet202Response struct {
 }
 
-func (response UpdatePet200Response) VisitUpdatePetResponse(w http.ResponseWriter) error {
-	w.WriteHeader(200)
+func (response UpdatePet202Response) VisitUpdatePetResponse(w http.ResponseWriter) error {
+	w.WriteHeader(202)
 	return nil
 }
 
-type UpdatePet400Response struct {
-}
+type UpdatePet400ApplicationProblemPlusJSONResponse Problem
 
-func (response UpdatePet400Response) VisitUpdatePetResponse(w http.ResponseWriter) error {
+func (response UpdatePet400ApplicationProblemPlusJSONResponse) VisitUpdatePetResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(400)
-	return nil
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdatePet404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdatePet404ApplicationProblemPlusJSONResponse) VisitUpdatePetResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+
+	return json.NewEncoder(w).Encode(response)
+}
+
+type UpdatePet409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdatePet409ApplicationProblemPlusJSONResponse) VisitUpdatePetResponse(w http.ResponseWriter) error {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+
+	return json.NewEncoder(w).Encode(response)
 }
 
 // StrictServerInterface represents all server handlers.
@@ -626,11 +634,10 @@ func (sh *strictHandler) AddPet(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeletePet operation middleware
-func (sh *strictHandler) DeletePet(w http.ResponseWriter, r *http.Request, petId int64, params DeletePetParams) {
+func (sh *strictHandler) DeletePet(w http.ResponseWriter, r *http.Request, petId int64) {
 	var request DeletePetRequestObject
 
 	request.PetId = petId
-	request.Params = params
 
 	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
 		return sh.ssi.DeletePet(ctx, request.(DeletePetRequestObject))

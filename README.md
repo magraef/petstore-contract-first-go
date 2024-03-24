@@ -39,5 +39,5 @@ go run cmd/server/main.go
 #### Run application with docker compose
 
 ```shell
-docker compose up
+docker compose up --build
 ```

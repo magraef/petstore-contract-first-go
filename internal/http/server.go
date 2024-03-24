@@ -37,5 +37,8 @@ func newChiHttpRouter(controller PetstoreController, readinessChecker internal.R
 	router.Get("/openapi", handler.Spec())
 	router.Handle("/swagger-ui*", v5emb.New("Petstore", "/openapi", "/swagger-ui"))
 
-	return HandlerFromMuxWithBaseURL(NewStrictHandler(controller, nil), router, baseURL)
+	return HandlerFromMuxWithBaseURL(NewStrictHandlerWithOptions(controller, nil, StrictHTTPServerOptions{
+		RequestErrorHandlerFunc:  ErrorHandler(),
+		ResponseErrorHandlerFunc: ErrorHandler(),
+	}), router, baseURL)
 }
