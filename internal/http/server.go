@@ -2,10 +2,13 @@ package http
 
 import (
 	"fmt"
-	"github.com/magraef/petstore-contract-first-go/internal"
-	"github.com/magraef/petstore-contract-first-go/internal/http/handler"
-	"github.com/swaggest/swgui/v5emb"
 	"net/http"
+
+	"github.com/magraef/petstore-contract-first-go/internal"
+	"github.com/magraef/petstore-contract-first-go/internal/http/handlers"
+	"github.com/magraef/petstore-contract-first-go/internal/http/middlewares"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/swaggest/swgui/v5emb"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -25,20 +28,27 @@ func NewServer(controller PetstoreController, readinessChecker internal.Readines
 
 func newChiHttpRouter(controller PetstoreController, readinessChecker internal.ReadinessCheck, baseURL string) http.Handler {
 	router := chi.NewRouter()
-	router.Use(middleware.RequestID)
-	router.Use(middleware.Logger)
-	router.Use(middleware.Recoverer)
-	router.Get("/q/health", handler.Health())
-	router.Get("/q/readiness", handler.NewReadinessHandler(
+	router.Use(middleware.RequestID, middleware.Recoverer)
+
+	//prometheus
+	router.Use(middlewares.NewPatternMiddleware("petstore"))
+	router.Handle("/metrics", promhttp.Handler())
+
+	// health & ready checks
+	router.Get("/q/health", handlers.HealthHandler())
+	router.Get("/q/readiness", handlers.NewReadinessHandler(
 		func() error {
 			return readinessChecker.Check()
 		},
 	).Handler())
-	router.Get("/openapi", handler.Spec())
+
+	router.Get("/openapi", handlers.OpenApiSpecHandler())
 	router.Handle("/swagger-ui*", v5emb.New("Petstore", "/openapi", "/swagger-ui"))
 
-	return HandlerFromMuxWithBaseURL(NewStrictHandlerWithOptions(controller, nil, StrictHTTPServerOptions{
-		RequestErrorHandlerFunc:  ErrorHandler(),
-		ResponseErrorHandlerFunc: ErrorHandler(),
-	}), router, baseURL)
+	return HandlerFromMuxWithBaseURL(NewStrictHandlerWithOptions(controller, nil,
+		StrictHTTPServerOptions{
+			RequestErrorHandlerFunc:  RequestErrorHandler(),
+			ResponseErrorHandlerFunc: ResponseErrorHandler(),
+		}),
+		router, baseURL)
 }

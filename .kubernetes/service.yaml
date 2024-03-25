@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: petstore-api
+  name: petstore
 spec:
   ports:
     - name: api
@@ -9,4 +9,4 @@ spec:
       protocol: TCP
       targetPort: 8080
   selector:
-    deployment: petstore-api
+    deployment: petstore

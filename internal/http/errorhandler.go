@@ -3,9 +3,10 @@ package http
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
+
 	"github.com/magraef/petstore-contract-first-go/internal"
 	"github.com/rs/zerolog/log"
-	"net/http"
 )
 
 const (
@@ -13,9 +14,24 @@ const (
 	contentTypeHeader      = "Content-Type"
 )
 
-func ErrorHandler() func(w http.ResponseWriter, r *http.Request, err error) {
+func RequestErrorHandler() func(w http.ResponseWriter, r *http.Request, err error) {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
-		problem := problemForErr(err, r.URL.Path)
+		problem := Problem{
+			Detail:   err.Error(),
+			Instance: r.URL.String(),
+			Status:   http.StatusBadRequest,
+			Title:    http.StatusText(http.StatusBadRequest),
+			Type:     nil,
+		}
+		w.WriteHeader(problem.Status)
+		w.Header().Set(contentTypeHeader, problemJsonHeaderValue)
+		json.NewEncoder(w).Encode(problem)
+	}
+}
+
+func ResponseErrorHandler() func(w http.ResponseWriter, r *http.Request, err error) {
+	return func(w http.ResponseWriter, r *http.Request, err error) {
+		problem := problemForErr(err, r.URL.String())
 		w.WriteHeader(problem.Status)
 		w.Header().Set(contentTypeHeader, problemJsonHeaderValue)
 		json.NewEncoder(w).Encode(problem)
@@ -28,7 +44,7 @@ func problemForErr(err error, instance string) Problem {
 			Detail:   err.Error(),
 			Instance: instance,
 			Status:   http.StatusNotFound,
-			Title:    "Not Found",
+			Title:    http.StatusText(http.StatusNotFound),
 			Type:     nil,
 		}
 	}
@@ -38,7 +54,7 @@ func problemForErr(err error, instance string) Problem {
 			Detail:   err.Error(),
 			Instance: instance,
 			Status:   http.StatusConflict,
-			Title:    "Conflict",
+			Title:    http.StatusText(http.StatusConflict),
 			Type:     nil,
 		}
 	}
@@ -46,10 +62,10 @@ func problemForErr(err error, instance string) Problem {
 	log.Err(err).Msg("Handling unmapped error")
 
 	return Problem{
-		Detail:   "Internal Server Error",
+		Detail:   http.StatusText(http.StatusInternalServerError),
 		Instance: instance,
 		Status:   http.StatusInternalServerError,
-		Title:    "Internal Server Error",
+		Title:    http.StatusText(http.StatusInternalServerError),
 		Type:     nil,
 	}
 }

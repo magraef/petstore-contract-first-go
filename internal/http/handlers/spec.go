@@ -1,11 +1,12 @@
-package handler
+package handlers
 
 import (
-	"github.com/magraef/petstore-contract-first-go/docs"
 	"net/http"
+
+	"github.com/magraef/petstore-contract-first-go/docs"
 )
 
-func Spec() http.HandlerFunc {
+func OpenApiSpecHandler() http.HandlerFunc {
 	return func(writer http.ResponseWriter, request *http.Request) {
 		spec, err := docs.OpenApiSpec()
 		if err != nil {

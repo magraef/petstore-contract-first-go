@@ -1,19 +1,19 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: petstore-api
+  name: petstore
 spec:
   replicas: 1
   selector:
     matchLabels:
-      deployment: petstore-api
+      deployment: petstore
   template:
     metadata:
       labels:
-        deployment: petstore-api
+        deployment: petstore
     spec:
       containers:
-      - image: 'petstore-api:latest'
+      - image: 'petstore:latest'
         name: app
         env:
         - name: APP_POSTGRESQL_URL
