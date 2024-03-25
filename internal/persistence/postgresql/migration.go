@@ -3,12 +3,14 @@ package postgresql
 import (
 	"context"
 	"fmt"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	_schema "github.com/magraef/petstore-contract-first-go/internal/persistence/postgresql/.schema"
 	"github.com/rs/zerolog/log"
 	"github.com/z0ne-dev/mgx/v2"
 )
 
+// migrateSchema migrates the database schema using the provided pgxpool.Pool.
 func migrateSchema(pool *pgxpool.Pool) error {
 	migrator, _ := mgx.New(
 		mgx.Migrations(

@@ -14,6 +14,7 @@ const (
 	contentTypeHeader      = "Content-Type"
 )
 
+// RequestErrorHandler returns a function that handles errors in HTTP requests.
 func RequestErrorHandler() func(w http.ResponseWriter, r *http.Request, err error) {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
 		problem := Problem{
@@ -29,6 +30,7 @@ func RequestErrorHandler() func(w http.ResponseWriter, r *http.Request, err erro
 	}
 }
 
+// ResponseErrorHandler returns a function that handles errors in HTTP responses.
 func ResponseErrorHandler() func(w http.ResponseWriter, r *http.Request, err error) {
 	return func(w http.ResponseWriter, r *http.Request, err error) {
 		problem := problemForErr(err, r.URL.String())

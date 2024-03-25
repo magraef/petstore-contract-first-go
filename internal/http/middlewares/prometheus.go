@@ -37,8 +37,8 @@ func (c Middleware) handler(next http.Handler) http.Handler {
 	return http.HandlerFunc(fn)
 }
 
-// NewPatternMiddleware returns a new prometheus Middleware handler that groups requests by the chi routing pattern.
-// EX: /users/{firstName} instead of /users/bob
+// NewPatternMiddleware returns a new prometheus Middleware handler that groups requests by the chi routing pattern
+// EG: /pets/{petId}
 func NewPatternMiddleware(name string, buckets ...float64) func(next http.Handler) http.Handler {
 	var m Middleware
 	m.reqs = prometheus.NewCounterVec(

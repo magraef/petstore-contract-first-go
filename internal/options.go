@@ -1,12 +1,16 @@
 package internal
 
+// Options represents configuration options for filter operations.
 type Options struct {
-	From  int
+	// From represents the starting id for pagination
+	From int
+	// Limit represents the maximum number of items to retrieve
 	Limit int
 }
 
 type OptionsConfig func(options *Options)
 
+// NewOptions creates a new Options instance with the provided configuration options.
 func NewOptions(opts ...OptionsConfig) Options {
 	options := Options{
 		From:  0,

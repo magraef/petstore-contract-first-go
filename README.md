@@ -16,13 +16,53 @@ The contract-first approach to API development involves designing the API contra
 
 ## Tools Used
 
-### OpenAPI Specification and oapi-codegen
+#### OpenAPI Specification and oapi-codegen
 
 The OpenAPI Specification (OAS) is a standard format for describing RESTful APIs. oapi-codegen is a tool that generates Go code from OpenAPI specifications, enabling type-safe HTTP client and server implementations.
 
-### SQLC
+#### SQLC
 
 sqlc is a tool for generating type-safe Go code from SQL. It allows you to write SQL queries alongside your Go code and generate Go code with type-safe methods for executing those queries.
+
+
+### Package structure
+
+
+This project follows a simple and encapsulated package structure to facilitate easy testing of different implementation layers.
+
+Below is an overview of the directory structure:
+
+```markdown
+.
+├── .kubernetes             # Kubernetes manifests
+├── build                   # Build-related files (e.g., Dockerfile)
+├── cmd                     # Server main executable
+├── docs                    # Documentation files containing the openapi.yaml file for our application
+│   └── openapi.yaml        # OpenAPI specification for the application
+├── internal                # Root directory for application sources
+    ├── http                # HTTP-related components (Controllers, Handlers, Middlewares, Server)
+    │   └── model.gen.go    # Generated model files from oapi-codegen
+    │   └── router.gen.go   # Generated server from oapi-codegen
+    │   └── controller.go   # Implementation of generated code
+    └── persistence         # Persistence layer implementations
+        └── postgresql      # The postgresql implementation of the applications persistence layer
+            └── .schema     # sqlc schema files for generation
+            └── sqlcgen     # sqlc generated source code
+```
+
+
+
+### Configuration
+
+You can configure the following environment variables:
+
+| Variable                | Description                                      |
+|-------------------------|--------------------------------------------------|
+| `APP_API_PORT`          | The port on which the API server will run.       |
+| `APP_API_BASEURL`       | The base URL for API endpoints.                  |
+| `APP_POSTGRESQL_URL`    | The URL of the PostgreSQL database.              |
+| `APP_POSTGRESQL_DATABASE` | The name of the PostgreSQL database to use.     |
+
 
 ## Usage
 

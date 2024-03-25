@@ -11,6 +11,7 @@ import (
 
 var _ StrictServerInterface = (*PetstoreController)(nil)
 
+// PetstoreController implements the generated StrictServerInterface.
 type PetstoreController struct {
 	resource internal.PetsResource
 }
