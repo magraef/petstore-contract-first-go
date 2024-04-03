@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: petstore
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      deployment: petstore
+  template:
+    metadata:
+      labels:
+        deployment: petstore
+    spec:
+      containers:
+      - image: 'petstore:latest'
+        name: app
+        env:
+        - name: APP_POSTGRESQL_URL
+          valueFrom:
+            secretKeyRef:
+              name: petstore-postgresql-secret
+              key: url
+        - name: APP_POSTGRESQL_DATABASE
+          value: petstore
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /q/readiness
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /q/health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 30

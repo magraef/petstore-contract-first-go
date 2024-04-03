@@ -1,4 +1,4 @@
-package petstore_contract_first_go
+package internal
 
 import (
 	"github.com/kelseyhightower/envconfig"
@@ -6,12 +6,18 @@ import (
 )
 
 type ApplicationConfig struct {
-	Api ApiConfig
+	Api        ApiConfig
+	Postgresql PostgresqlConfig
 }
 
 type ApiConfig struct {
 	Port    uint16 `default:"8080"`
 	BaseUrl string `split_words:"true" default:"/api"`
+}
+
+type PostgresqlConfig struct {
+	Url      string `default:"postgres://postgres:admin@localhost:5432"`
+	Database string `default:"petstore"`
 }
 
 func NewApplicationConfig() ApplicationConfig {
