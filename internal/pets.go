@@ -4,6 +4,8 @@ import (
 	"context"
 )
 
+// Pet defines id for Pets.
+
 type PetId int64
 
 // Pet defines model for Pet.
